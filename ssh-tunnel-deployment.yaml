@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ssh-tunnel
+  labels:
+    app: ssh-tunnel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ssh-tunnel
+  template:
+    metadata:
+      labels:
+        app: ssh-tunnel
+    spec:
+      containers:
+      - name: ssh-server
+        image: linuxserver/openssh-server
+        env:
+        - name: PUBLIC_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: ssh-tunnel-config
+              key: public_key
+        - name: ALLOW_TCP_FORWARDING
+          value: "true"
+        - name: PASSWORD_ACCESS
+          value: "false"
+        - name: USER_PASSWORD
+          value: mypassword
+        - name: USER_NAME
+          value: myuser
+        volumeMounts:
+          - name: config
+            mountPath: /etc/s6-overlay/s6-rc.d/init-openssh-server-config/run
+            subPath: run
+      volumes:
+        - name: config
+          configMap:
+            name: ssh-tunnel-config
+            defaultMode: 0777
+
+
